@@ -1,0 +1,58 @@
+#include <stdio.h>
+#define MAXLINE 1024 
+void main(void)
+{
+	FILE *fpin;   // ������� ����  
+	FILE *fpout;  // �������� ����  
+	char mass[MAXLINE]; // ������� ������  
+	char *ptr;
+	char c;
+	int i, number = 0, string = 0, cnt = 0, max = 0;
+	fopen_s(&fpin, "test.txt", "rt"); // ������� ���� ��� ������  
+	if (fpin == NULL)
+		return;    // ������ ��� �������� ����� 
+	fopen_s(&fpout, "result.txt", "wt"); // ������� ���� ��� ������  
+	if (fpout == NULL)
+		return;    // ������ ��� �������� ����� 
+	while (!feof(fpin))// ���� �� ����� �������� �����
+	{
+		ptr = fgets(mass, MAXLINE, fpin); // ������ ������ 
+		if (ptr == NULL)
+			break; // ���� �������� 
+		do
+		{
+			c = *ptr;
+			if (c == ' ' || c == '.' || c == ',' || c == '\0' || c == '!' || c == '?' || c == '\n' || c == EOF)	// ����� ����� �����
+			{
+				if (max < cnt)
+				{
+					max = cnt;
+					number = string;
+				}
+				cnt = 0;					// �������� �������
+			}
+			else
+			{
+				if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z')	// �������� �����
+					cnt++;					// ���������� ��������
+			}
+			ptr++; // ���������� ��������� �� ������
+		} 
+		while (c != '\0'); // ���� �� ����� ������
+		cnt = 0;
+		string++;
+	}
+	fseek(fpin, 0, SEEK_SET);
+	for (i = 0; i < string; i++)
+	{
+		ptr = fgets(mass, MAXLINE, fpin); // ������ ������ 
+		if (ptr == NULL)
+			break; // ���� �������� 
+		if (i == number)
+			continue;
+		else
+			fputs(mass, fpout); // ������ ������
+	}
+	fclose(fpin); // ������� ������� ����
+	fclose(fpout); // ������� �������� ����
+}
