@@ -1,0 +1,135 @@
+#define crt_secure_no_warnings
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <locale.h>
+
+typedef struct 
+{
+	char janr[20];//жанр
+	char name[20];//название
+	char avtor[20];//автор
+}Baza;
+
+void out(FILE *f, Baza *aud, int size) {//вывод в файл
+	fwrite(&size, sizeof(int), 1, f);
+	fwrite(aud, sizeof(Baza), size, f);
+}
+
+void in(FILE *f, Baza *aud, int *size) {//вывод в файл
+	fread(size, sizeof(int), 1, f);
+	fread(aud, sizeof(Baza), *size, f);
+}
+
+Baza audd() {//считывание из консоли нового элемента
+	Baza aud;
+	printf("\nName: ");
+	scanf_s("%s", &aud.name);
+	printf("\nAvtor: ");
+	scanf_s("%s", &aud.avtor);
+	printf("\nJanr: ");
+	scanf_s("%s", &aud.janr);
+	return aud;
+}
+
+void show(Baza *aud, int size) {//отображение всех записей
+	int i;
+	for (i = 0; i < size; i++) {
+		printf("\n%s - %s (%s)", aud[i].avtor, aud[i].name, aud[i].janr);
+	}
+}
+
+void find(Baza *aud, int size) {//поиск по совпадениям
+	char ch[3][20];
+	int i, j, max;
+	printf("\nEnter count: ");
+	scanf_s("%d", &max);
+	for (j = 0; j < max; j++)//считваем слова дл поиска
+		scanf_s("%s", ch[j]);
+	for (i = 0; i < size; i++)
+		for (j = 0; j < max; j++)
+			if (strcmp(aud[i].avtor, ch[j]) == 0 || strcmp(aud[i].janr, ch[j]) == 0 || strcmp(aud[i].name, ch[j]) == 0) //проверка на хотябы одно совпадение
+			{
+				printf("\n%s - %s (%s)", aud[i].avtor, aud[i].name, aud[i].janr);
+				break;
+			}
+}
+
+int name(const void *f, const void *s) //по названию
+{
+	return strcmp(((Baza*)f)->name, ((Baza*)s)->name) > 0;
+}
+
+int avtor(const void *f, const void *s) //по автору
+{
+	return strcmp(((Baza*)f)->avtor, ((Baza*)s)->avtor) > 0;
+}
+
+int janr(const void *f, const void *s) //по жанру
+{
+	return strcmp(((Baza*)f)->janr, ((Baza*)s)->janr) > 0;
+}
+
+
+int main() {
+	setlocale(LC_ALL, "");
+	Baza aud[100];
+	int size = 0, i;
+	FILE *f;
+	fopen_s(&f, "f", "rb");
+	if (f) {
+		in(f, aud, &size);
+		fclose(f);
+	}
+	fopen_s(&f, "f", "wb");
+	while (1) 
+	{
+		printf("Введите:\n|1| - если хотите добавить аудиозапись\n");
+		printf("|2| - если хотите редактировать данные\n");
+		printf("|3| - если хотите удалить аудиозапись\n");
+		printf("|4| - если хотите сортировать по названию\n");
+		printf("|5| - если хотите сортировать по автору\n");
+		printf("|6| - если хотите сортировать по жанру\n");
+		printf("|7| - если хотите открыть поиск\n");
+		printf("|0| - если хотите выйти\n>");
+		scanf_s("%d", &i);
+		switch (i) 
+		{
+		case 1:
+			aud[size] = audd();
+			size++;
+			break;
+		case 2:
+			printf("\ni: ");
+			scanf_s("%d", &i);
+			aud[i] = audd();
+			break;
+		case 3:
+			printf("\ni: ");
+			scanf_s("%d", &i);
+			--size;
+			for (; i < size; i++)
+				aud[i] = aud[i + 1];
+			break;
+		case 4:
+			qsort(aud, size, sizeof(Baza), name);
+			show(aud, size);
+			break;
+		case 5:
+			qsort(aud, size, sizeof(Baza), avtor);
+			show(aud, size);
+			break;
+		case 6:
+			qsort(aud, size, sizeof(Baza), janr);
+			show(aud, size);
+			break;
+		case 7:
+			find(aud, size);
+			break;
+		case 0:
+			out(f, aud, size);
+			fclose(f);
+			return 0;
+		}
+	}
+}
