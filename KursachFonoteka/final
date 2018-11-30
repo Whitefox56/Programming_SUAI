@@ -1,0 +1,164 @@
+#define crt_secure_no_warnings
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <locale.h>
+
+typedef struct {
+	char genre[20];//жанр
+	char title[20];//название
+	char auth[20];//автор
+}Baza;
+
+void out(FILE *f, Baza *mp, int size) {//вывод в файл
+	fwrite(&size, sizeof(int), 1, f);
+	fwrite(mp, sizeof(Baza), size, f);
+}
+
+void in(FILE *f, Baza *mp, int *size) {//вывод в файл
+	fread(size, sizeof(int), 1, f);
+	fread(mp, sizeof(Baza), *size, f);
+}
+
+Baza mp3() {//считывание из консоли нового элемента
+	Baza mp;
+	printf("\nTitle: ");
+	scanf("%s", mp.title);
+	printf("\nAuthor: ");
+	scanf("%s", mp.auth);
+	printf("\nGenre: ");
+	scanf("%s", mp.genre);
+	return mp;
+}
+
+void show(Baza *mp, int size) {//отображение всех записей
+	int i;
+	for (i = 0; i < size; i++) {
+		printf("\n%s - %s (%s)", mp[i].auth, mp[i].title, mp[i].genre);
+	}
+}
+
+void find(Baza *mp, int size) {//поиск по совпадениям
+	char ch[3][20];
+	int i, j, max;
+	printf("\nВведите кол-во ключевых слов для поиска (1-3): ");
+	scanf("%d", &max);
+	for (j = 0; j < max; j++)//считваем слова дл поиска
+		scanf("%s", ch[j]);
+	for (i = 0; i < size; i++)
+		for (j = 0; j < max; j++)
+			if (strcmp(mp[i].auth, ch[j]) == 0 || strcmp(mp[i].genre, ch[j]) == 0 || strcmp(mp[i].title, ch[j]) == 0) {//проверяем, совпадает ли хотя бы одно поле
+				printf("\n%s - %s (%s)", mp[i].auth, mp[i].title, mp[i].genre);
+				break;
+			}
+}
+
+int title(const void *f, const void *s) {//по названию
+	return strcmp(((Baza*)f)->title, ((Baza*)s)->title) > 0;
+}
+
+int auth(const void *f, const void *s) {//по автору
+	return strcmp(((Baza*)f)->auth, ((Baza*)s)->auth) > 0;
+}
+
+int genre(const void *f, const void *s) {//по жанру
+	return strcmp(((Baza*)f)->genre, ((Baza*)s)->genre) > 0;
+}
+
+
+int main()
+{
+	Baza mp[100];
+	setlocale(LC_ALL, "");
+	int size = 0, i;
+	FILE *f = fopen("f", "rb");
+	if (f)
+	{
+		in(f, mp, &size);
+		fclose(f);
+	}
+	f = fopen("f", "wb");
+	char flag_wasNextLine = 0;
+	while (1)
+	{
+		if (!flag_wasNextLine)
+		{
+			printf("Введите:\n|1| - если хотите добавить аудиозапись\n");
+			printf("|2| - если хотите редактировать данные\n");
+			printf("|3| - если хотите удалить аудиозапись\n");
+			printf("|4| - если хотите сортировать по названию\n");
+			printf("|5| - если хотите сортировать по автору\n");
+			printf("|6| - если хотите сортировать по жанру\n");
+			printf("|7| - если хотите открыть поиск\n");
+			printf("|8| - если хотите отобразить весь список\n");
+			printf("|0| - если хотите выйти\n>");
+		}
+		char tmpc, prevc=0;
+		i = 0;
+		while ((tmpc = getchar()) != '\n')
+		{
+			i++;
+			prevc = prevc*10 + tmpc;
+		}
+		if (i == 0)
+			flag_wasNextLine = 1;
+		else
+			flag_wasNextLine = 0;
+
+		i = prevc - '0';
+		switch (i)
+		{
+		case 1:
+			mp[size] = mp3();
+			size++;
+			printf("\n");
+			break;
+		case 2:
+			printf("\ni: ");
+			scanf("%d", &i);
+			mp[i] = mp3();
+			printf("\n");
+			break;
+		case 3:
+			printf("\ni: ");
+			scanf("%d", &i);
+			--size;
+			for (; i < size; i++)
+				mp[i] = mp[i + 1];
+			printf("\n");
+			break;
+		case 4:
+			qsort(mp, size, sizeof(Baza), title);
+			show(mp, size);
+			printf("\n");
+			break;
+		case 5:
+			qsort(mp, size, sizeof(Baza), auth);
+			show(mp, size);
+			printf("\n");
+			break;
+		case 6:
+			qsort(mp, size, sizeof(Baza), genre);
+			show(mp, size);
+			printf("\n");
+			break;
+		case 7:
+			find(mp, size);
+			printf("\n");
+			break;
+		case 8:
+			for (i = 0; i < size; i++)
+				printf("\n %d) %s - %s (%s)", i, mp[i].auth, mp[i].title, mp[i].genre);
+			printf("\n");
+			break;
+		case 0:
+			out(f, mp, size);
+			fclose(f);
+			return 0;
+		default:
+		{
+			break;
+		}
+		}
+	}
+}
